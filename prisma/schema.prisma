@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// Student model harus didefinisikan terlebih dahulu
+model student {
+  id        Int      @id @default(autoincrement())
+  nis       String   @unique(map: "Student_nis_key")
+  name      String
+  email     String?  @unique(map: "Student_email_key")
+  kelas     String
+  jurusan   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke Peminjaman (nama unik)
+  peminjamans Peminjaman[] @relation("PeminjamanStudent")
+
+  // Relasi ke User (untuk login siswa)
+  user User?
+}
+
+model Book {
+  id        Int      @id @default(autoincrement())
+  title     String
+  author    String
+  publisher String
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke Peminjaman (nama unik, beda dari atas)
+  peminjamans Peminjaman[] @relation("PeminjamanBook")
+}
+
+model Peminjaman {
+  id             Int       @id @default(autoincrement())
+  bookId         Int
+  studentId      Int
+  tanggalPinjam  DateTime  @default(now()) @db.Date
+  tanggalKembali DateTime? @db.Date
+
+  // Relasi ke Book (harus pakai nama yang sama dengan di Book)
+  buku Book @relation("PeminjamanBook", fields: [bookId], references: [id], onDelete: Cascade)
+
+  // Relasi ke student (harus pakai nama yang sama dengan di student)
+  student student @relation("PeminjamanStudent", fields: [studentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String // hashed
+  role      Role // enum
+  studentId Int?     @unique // Hubungan ke student (nullable karena admin/petugas bukan siswa)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke Student (jika role SISWA)
+  student student? @relation(fields: [studentId], references: [id])
+}
+
+enum Role {
+  ADMIN
+  PETUGAS
+  SISWA
+}
