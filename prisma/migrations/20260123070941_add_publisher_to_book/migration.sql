@@ -5,4 +5,8 @@
 
 */
 -- AlterTable
-ALTER TABLE `Book` ADD COLUMN `publisher` VARCHAR(191) NOT NULL;
+ALTER TABLE Book ADD COLUMN publisher VARCHAR(191);
+
+UPDATE Book SET publisher = 'Unknown' WHERE publisher IS NULL;
+
+ALTER TABLE Book MODIFY publisher VARCHAR(191) NOT NULL;
