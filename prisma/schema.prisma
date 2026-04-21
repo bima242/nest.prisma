@@ -29,7 +29,7 @@ model Book {
   id        Int      @id @default(autoincrement())
   title     String
   author    String
-   publisher String   @default("")
+  publisher String   @default("")
   year      Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -42,8 +42,8 @@ model Peminjaman {
   id             Int       @id @default(autoincrement())
   bookId         Int
   studentId      Int
-  tanggalPinjam  DateTime  @default(now()) @db.Date
-  tanggalKembali DateTime? @db.Date
+  tanggalPinjam  DateTime  @default(now()) 
+  tanggalKembali DateTime? 
 
   // Relasi ke Book (harus pakai nama yang sama dengan di Book)
   buku Book @relation("PeminjamanBook", fields: [bookId], references: [id], onDelete: Cascade)
