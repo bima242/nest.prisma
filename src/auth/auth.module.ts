@@ -3,6 +3,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { PrismaModule } from '../prisma/prisma.module';
 import { JwtStrategy } from './jwt.strategy';
 import { JwtAuthGuard } from './jwt-auth-guard';
@@ -11,12 +12,14 @@ import { RolesGuard } from './roles.guard';
 @Module({
   imports: [
     PrismaModule,
-    // Menggunakan registerAsync agar bisa membaca process.env [cite: 152-157]
+    ConfigModule,
     JwtModule.registerAsync({
-      useFactory: () => ({
-        secret: process.env.JWT_SECRET, // Ambil dari .env [cite: 155]
+      imports: [ConfigModule],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET'),
         signOptions: { expiresIn: '1d' },
       }),
+      inject: [ConfigService],
     }),
   ],
   controllers: [AuthController],
