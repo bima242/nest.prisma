@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -13,126 +18,110 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string) {
-    console.log('LOGIN ATTEMPT:', username);
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: { username },
-        include: { student: true },
-      });
-      if (!user) {
-        throw new UnauthorizedException('Username atau password salah');
-      }
+    console.log('STEP 1: masuk login');
 
-      const isPasswordValid = await bcrypt.compare(password, user.password);
-      if (!isPasswordValid) {
-        throw new UnauthorizedException('Username atau password salah');
-      }
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+      include: { student: true },
+    });
 
-      const payload: any = { sub: user.id, role: user.role, username: user.username };
-      if (user.role === 'SISWA' && user.studentId) {
-        payload.studentId = user.studentId;
-      }
+    console.log('STEP 2: user:', user);
 
-      return {
-        access_token: this.jwtService.sign(payload),
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          studentId: user.studentId,
-        },
-      };
-    } catch (error) {
-      console.error('LOGIN ERROR:', error.message);
-      console.error('LOGIN ERROR DETAIL:', error);
-      throw error;
+    if (!user) {
+      throw new UnauthorizedException('Username atau password salah');
     }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    console.log('STEP 3: password valid:', isPasswordValid);
+
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Username atau password salah');
+    }
+
+    const payload: any = {
+      sub: user.id,
+      role: user.role,
+      username: user.username,
+    };
+
+    if (user.role === 'SISWA' && user.studentId) {
+      payload.studentId = user.studentId;
+    }
+
+    console.log('STEP 4: sebelum sign JWT');
+
+    const token = this.jwtService.sign(payload);
+
+    console.log('STEP 5: token berhasil dibuat');
+
+    return {
+      access_token: token,
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        studentId: user.studentId,
+      },
+    };
   }
 
-  async register(username: string, password: string, role: string, studentId?: number) {
+  async register(
+    username: string,
+    password: string,
+    role: string,
+    studentId?: number,
+  ) {
     console.log('REGISTER ATTEMPT:', username);
-    try {
-      const hashedPassword = await bcrypt.hash(password, 10);
 
-      const validRoles = ['ADMIN', 'PETUGAS', 'SISWA'];
-      const roleUpper = role.toUpperCase();
-      if (!validRoles.includes(roleUpper)) {
-        throw new BadRequestException('Role tidak valid. Gunakan: ADMIN, PETUGAS, atau SISWA');
-      }
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-      const roleEnum = roleUpper as Role;
+    const validRoles = ['ADMIN', 'PETUGAS', 'SISWA'];
+    const roleUpper = role.toUpperCase();
 
-      if (roleEnum === 'SISWA' && !studentId) {
-        throw new BadRequestException('Untuk role SISWA, studentId wajib diisi');
-      }
+    if (!validRoles.includes(roleUpper)) {
+      throw new BadRequestException(
+        'Role tidak valid. Gunakan: ADMIN, PETUGAS, atau SISWA',
+      );
+    }
 
-      if (studentId) {
-        const student = await this.prisma.student.findUnique({
-          where: { id: studentId },
-        });
-        if (!student) {
-          throw new NotFoundException(`Student dengan ID ${studentId} tidak ditemukan`);
-        }
-      }
+    const roleEnum = roleUpper as Role;
 
-      const user = await this.prisma.user.create({
-        data: {
-          username,
-          password: hashedPassword,
-          role: roleEnum,
-          studentId: studentId || null,
-        },
+    if (roleEnum === 'SISWA' && !studentId) {
+      throw new BadRequestException(
+        'Untuk role SISWA, studentId wajib diisi',
+      );
+    }
+
+    if (studentId) {
+      const student = await this.prisma.student.findUnique({
+        where: { id: studentId },
       });
 
-      return {
-        message: 'User berhasil dibuat',
-        user: {
-          id: user.id,
-          username: user.username,
-          role: user.role,
-          studentId: user.studentId,
-        },
-      };
-    } catch (error) {
-      console.error('REGISTER ERROR:', error.message);
-      console.error('REGISTER ERROR DETAIL:', error);
-      throw error;
+      if (!student) {
+        throw new NotFoundException(
+          `Student dengan ID ${studentId} tidak ditemukan`,
+        );
+      }
     }
-  }
 
-  async getAllUsers() {
-    console.log('GET ALL USERS ATTEMPT');
-    try {
-      const users = await this.prisma.user.findMany({
-        select: {
-          id: true,
-          username: true,
-          role: true,
-          createdAt: true,
-          updatedAt: true,
-        },
-      });
-      return users;
-    } catch (error) {
-      console.error('GET ALL USERS ERROR:', error.message);
-      throw error;
-    }
-  }
+    const user = await this.prisma.user.create({
+      data: {
+        username,
+        password: hashedPassword,
+        role: roleEnum,
+        studentId: studentId || null,
+      },
+    });
 
-  async findByUsername(username: string) {
-    try {
-      const user = await this.prisma.user.findUnique({
-        where: { username },
-        select: {
-          id: true,
-          username: true,
-          role: true,
-        },
-      });
-      return user;
-    } catch (error) {
-      console.error('FIND BY USERNAME ERROR:', error.message);
-      throw error;
-    }
+    return {
+      message: 'User berhasil dibuat',
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        studentId: user.studentId,
+      },
+    };
   }
 }

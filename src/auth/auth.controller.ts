@@ -11,16 +11,6 @@ export class AuthController {
   @Public()
   @Post('login')
   @ApiOperation({ summary: 'Login user dan menghasilkan JWT token' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        username: { type: 'string', example: 'admin' },
-        password: { type: 'string', example: 'password123' },
-      },
-      required: ['username', 'password'],
-    },
-  })
   login(@Body() body: any) {
     return this.authService.login(body.username, body.password);
   }
@@ -28,22 +18,6 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Registrasi user baru' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        username: { type: 'string', example: 'siswa1' },
-        password: { type: 'string', example: 'password123' },
-        role: {
-          type: 'string',
-          example: 'ADMIN',
-          enum: ['ADMIN', 'PETUGAS', 'SISWA'],
-        },
-        studentId: { type: 'number', example: 1, nullable: true },
-      },
-      required: ['username', 'password', 'role'],
-    },
-  })
   register(@Body() body: any) {
     return this.authService.register(
       body.username,
