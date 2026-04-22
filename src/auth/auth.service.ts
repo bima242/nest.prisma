@@ -22,7 +22,7 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { username },
-      include: { student: true },
+      // ❌ include student DIHAPUS (ini penyebab paling mungkin crash)
     });
 
     console.log('STEP 2: user:', user);
@@ -45,10 +45,6 @@ export class AuthService {
       username: user.username,
     };
 
-    if (user.role === 'SISWA' && user.studentId) {
-      payload.studentId = user.studentId;
-    }
-
     console.log('STEP 4: sebelum sign JWT');
 
     const token = this.jwtService.sign(payload);
@@ -61,7 +57,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         role: user.role,
-        studentId: user.studentId,
+        studentId: user.studentId, // tetap ada kalau field ini memang ada
       },
     };
   }
