@@ -1,31 +1,37 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Public } from './public.decorators';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 
-@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Public()
   @Post('login')
-  @ApiOperation({ summary: 'Login user dan menghasilkan JWT token' })
-  login(@Body() body: LoginDto) {
-    return this.authService.login(body.username, body.password);
+  async login(@Body() body: any) {
+    console.log('👉 CONTROLLER MASUK LOGIN:', body);
+    try {
+      return await this.authService.login(body.username, body.password);
+    } catch (err) {
+      console.error('❌ CONTROLLER ERROR:', err);
+      throw err;
+    }
   }
 
   @Public()
   @Post('register')
-  @ApiOperation({ summary: 'Registrasi user baru' })
-  register(@Body() body: RegisterDto) {
-    return this.authService.register(
-      body.username,
-      body.password,
-      body.role,
-      body.studentId,
-    );
+  async register(@Body() body: any) {
+    console.log('👉 CONTROLLER MASUK REGISTER:', body);
+    try {
+      return await this.authService.register(
+        body.username,
+        body.password,
+        body.role,
+        body.studentId,
+      );
+    } catch (err) {
+      console.error('❌ CONTROLLER ERROR:', err);
+      throw err;
+    }
   }
 }
