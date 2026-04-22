@@ -13,6 +13,7 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string) {
+    console.log('LOGIN ATTEMPT:', username);
     try {
       const user = await this.prisma.user.findUnique({
         where: { username },
@@ -49,6 +50,7 @@ export class AuthService {
   }
 
   async register(username: string, password: string, role: string, studentId?: number) {
+    console.log('REGISTER ATTEMPT:', username);
     try {
       const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -99,6 +101,7 @@ export class AuthService {
   }
 
   async getAllUsers() {
+    console.log('GET ALL USERS ATTEMPT');
     try {
       const users = await this.prisma.user.findMany({
         select: {
