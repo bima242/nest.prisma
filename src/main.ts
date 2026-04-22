@@ -1,17 +1,10 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.useGlobalPipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  );
+
   const config = new DocumentBuilder()
     .setTitle('Bimaa')
     .setDescription('Bimaa')
@@ -20,6 +13,11 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('bimahebad', app, document);
-  await app.listen(process.env.PORT ?? 3000);
+
+  const port = process.env.PORT ?? 3000;
+  console.log('Starting on port:', port);
+  console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
+  console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+  await app.listen(port);
 }
 bootstrap();
