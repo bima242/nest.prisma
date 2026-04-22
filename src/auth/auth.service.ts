@@ -29,8 +29,8 @@ export class AuthService {
       throw new UnauthorizedException('Username atau password salah');
     }
 
-    // 🔥 BYPASS BCRYPT (TEST)
-    const isPasswordValid = password === user.password;
+    // sementara bypass password biar fokus ke JWT
+    const isPasswordValid = true;
 
     console.log('STEP 3: password valid:', isPasswordValid);
 
@@ -45,6 +45,7 @@ export class AuthService {
     };
 
     console.log('STEP 4: sebelum sign JWT');
+    console.log('JWT SECRET:', process.env.JWT_SECRET);
 
     const token = this.jwtService.sign(payload);
 
@@ -68,9 +69,6 @@ export class AuthService {
     studentId?: number,
   ) {
     console.log('REGISTER ATTEMPT:', username);
-
-    // 🔥 SIMPAN TANPA HASH (BIAR MATCH SAMA LOGIN TEST)
-    const hashedPassword = password;
 
     const validRoles = ['ADMIN', 'PETUGAS', 'SISWA'];
     const roleUpper = role.toUpperCase();
@@ -104,7 +102,7 @@ export class AuthService {
     const user = await this.prisma.user.create({
       data: {
         username,
-        password: hashedPassword,
+        password, // sementara tanpa hash
         role: roleEnum,
         studentId: studentId || null,
       },
