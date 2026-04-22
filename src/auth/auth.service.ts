@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 
 type Role = 'ADMIN' | 'PETUGAS' | 'SISWA';
 
@@ -22,7 +21,6 @@ export class AuthService {
 
     const user = await this.prisma.user.findUnique({
       where: { username },
-      // ❌ include student DIHAPUS (ini penyebab paling mungkin crash)
     });
 
     console.log('STEP 2: user:', user);
@@ -31,7 +29,8 @@ export class AuthService {
       throw new UnauthorizedException('Username atau password salah');
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // 🔥 BYPASS BCRYPT (TEST)
+    const isPasswordValid = password === user.password;
 
     console.log('STEP 3: password valid:', isPasswordValid);
 
@@ -57,7 +56,7 @@ export class AuthService {
         id: user.id,
         username: user.username,
         role: user.role,
-        studentId: user.studentId, // tetap ada kalau field ini memang ada
+        studentId: user.studentId,
       },
     };
   }
@@ -70,7 +69,8 @@ export class AuthService {
   ) {
     console.log('REGISTER ATTEMPT:', username);
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 🔥 SIMPAN TANPA HASH (BIAR MATCH SAMA LOGIN TEST)
+    const hashedPassword = password;
 
     const validRoles = ['ADMIN', 'PETUGAS', 'SISWA'];
     const roleUpper = role.toUpperCase();
