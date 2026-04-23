@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 
 type Role = 'ADMIN' | 'PETUGAS' | 'SISWA';
 
@@ -17,23 +18,16 @@ export class AuthService {
   ) {}
 
   async login(username: string, password: string) {
-    console.log('STEP 1: masuk login');
-
     try {
       const user = await this.prisma.user.findUnique({
         where: { username },
       });
 
-      console.log('STEP 2: user:', user);
-
       if (!user) {
         throw new UnauthorizedException('Username atau password salah');
       }
 
-      // 🔥 sementara bypass password
-      const isPasswordValid = true;
-      console.log('STEP 3: password valid:', isPasswordValid);
-
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         throw new UnauthorizedException('Username atau password salah');
       }
@@ -42,14 +36,10 @@ export class AuthService {
         sub: user.id,
         role: user.role,
         username: user.username,
+        studentId: user.studentId || null,
       };
 
-      console.log('STEP 4: sebelum sign JWT');
-      console.log('JWT SECRET VALUE:', process.env.JWT_SECRET);
-
       const token = this.jwtService.sign(payload);
-
-      console.log('STEP 5: token berhasil dibuat');
 
       return {
         access_token: token,
@@ -61,7 +51,7 @@ export class AuthService {
         },
       };
     } catch (err) {
-      console.error('❌ SERVICE ERROR:', err);
+      console.error('LOGIN ERROR:', err);
       throw err;
     }
   }
@@ -72,8 +62,6 @@ export class AuthService {
     role: string,
     studentId?: number,
   ) {
-    console.log('REGISTER ATTEMPT:', username);
-
     try {
       const validRoles = ['ADMIN', 'PETUGAS', 'SISWA'];
       const roleUpper = role.toUpperCase();
@@ -104,10 +92,12 @@ export class AuthService {
         }
       }
 
+      const hashedPassword = await bcrypt.hash(password, 10);
+
       const user = await this.prisma.user.create({
         data: {
           username,
-          password, // sementara tanpa hash
+          password: hashedPassword,
           role: roleEnum,
           studentId: studentId || null,
         },
@@ -123,7 +113,7 @@ export class AuthService {
         },
       };
     } catch (err) {
-      console.error('❌ REGISTER ERROR:', err);
+      console.error('REGISTER ERROR:', err);
       throw err;
     }
   }
