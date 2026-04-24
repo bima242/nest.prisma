@@ -15,18 +15,18 @@ import { UpdateBookDto } from './dto/update-book.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth-guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorators';
-import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger'; // Tambahkan ini
+import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 
-@ApiTags('Books') // Kelompokkan ke folder Books di Swagger [cite: 96]
-@ApiBearerAuth() // Aktifkan tombol Authorize untuk JWT [cite: 100-102]
+@ApiTags('Books')
+@ApiBearerAuth()
 @Controller('books')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class BookController {
   constructor(private readonly bookService: BookService) {}
 
   @Post()
-  @Roles('ADMIN')
-  @ApiOperation({ summary: 'Menambahkan buku baru (ADMIN only)' }) // Deskripsi [cite: 91, 97-99]
+  @Roles('ADMIN', 'PETUGAS')
+  @ApiOperation({ summary: 'Menambahkan buku baru (ADMIN & PETUGAS)' })
   create(@Body() dto: CreateBookDto) {
     return this.bookService.create(dto);
   }
